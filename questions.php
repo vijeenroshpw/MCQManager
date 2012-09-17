@@ -1,14 +1,23 @@
 <html>
 	<head> <title> Questions </title> 
-	<style type='text/css'>
-		.questions {
-			width:500px;
-		}
-	</style>	
-	
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js" type="text/javascript"></script>
+	 
+		<style type='text/css'>
+			.questions {
+				width:500px;
+			}
+		</style>	
+	</head>
 	<body>
 		<?php
 			session_start();
+			if(isset($_GET['update'])) {
+				if($_GET['update'] > $_SESSION['time']) {
+					$_SESSION['time'] = $_GET['update'];
+				}
+				exit();
+			}
+
 			if(isset($_SESSION['uname']) && isset($_SESSION['event'])) {
 				
 				$uname = $_SESSION['uname'];
@@ -22,11 +31,15 @@
 					echo "<h3 align='center'> You have already attanded the examination</h3> ";
 					echo "<center><a href='logout.php'> Logout </a></center>";
 				} else {
+					if(! isset($_SESSION['time']))
+						$_SESSION['time'] = 0;
+					$maxtime = 10;              //set for one minute
 					echo " <h3 align='center'><font color='green'>$event</font> -- Multiple Choice Question </h1>";
 					echo " <h2 align=center>Each question carries 1 mark , no negative marks</h2>";
+					echo "<div id=timedisp align=center style='font-color:green'> </div>";
 					$result = mysql_query("select * from $event ");
 					echo "<center><b>";				
-					echo "<form method=post action=verify.php>";				
+					echo "<form method=post action=verify.php id='answerform'>";				
 					$colorcounter=0;				
 					$color = array('#8467d7','#56a5ec','#659ec7','#4863a0');				
 					while($row = mysql_fetch_assoc($result)) {
@@ -51,6 +64,23 @@
 					echo "<input type=submit value=submit>";
 					echo "</form>";				
 					echo "</b></center>";			
+					echo "<script type=text/javascript>
+							var timer = $_SESSION[time];
+							function inc_timer() {
+								timer++;
+								document.getElementById('timedisp').innerHTML = timer;			
+								if(timer >= $maxtime) {
+									alert(' Time is UP ');
+									document.getElementById('answerform').submit();
+								}
+							}
+							setInterval(inc_timer,1000);
+							function update_time() {
+								$.ajax({url:'questions.php?update='+timer.toString(),success:function(){}});
+							}
+							setInterval(update_time,2000);
+
+						</script>";	
 				}
 			
 			}		
